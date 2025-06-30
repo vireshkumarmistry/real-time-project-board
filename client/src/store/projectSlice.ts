@@ -166,13 +166,9 @@ const projectSlice = createSlice({
           (action.payload as { message: string })?.message ||
           "Failed to create project";
       })
-      .addCase(
-        updateProject.fulfilled,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (state, action: PayloadAction<Project>) => {
-          // Do not update here, rely on socket event for real-time update
-        }
-      )
+      .addCase(updateProject.fulfilled, () => {
+        // Do not update here, rely on socket event for real-time update
+      })
       .addCase(
         deleteProject.fulfilled,
         (state, action: PayloadAction<string>) => {

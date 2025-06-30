@@ -27,6 +27,7 @@ const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { items: projects, loading } = useSelector((state) => state.projects);
+  const { user } = useSelector((state) => state.auth);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -78,24 +79,28 @@ const ProjectsPage: React.FC = () => {
       ) : projects.length === 0 ? (
         <Box>
           <Typography>No projects found.</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpen(true)}
-          >
-            Create Project
-          </Button>
+          {user?.role === "admin" && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpen(true)}
+            >
+              Create Project
+            </Button>
+          )}
         </Box>
       ) : (
         <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpen(true)}
-            sx={{ mb: 2 }}
-          >
-            New Project
-          </Button>
+          {user?.role === "admin" && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpen(true)}
+              sx={{ mb: 2 }}
+            >
+              New Project
+            </Button>
+          )}
           {projects.map((project) => (
             <Box
               key={project._id}
@@ -117,32 +122,34 @@ const ProjectsPage: React.FC = () => {
           ))}
         </Box>
       )}
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Create Project</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Project Name"
-            fullWidth
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            margin="dense"
-            label="Description"
-            fullWidth
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreate} disabled={!name} variant="contained">
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {user?.role === "admin" && (
+        <Dialog open={open} onClose={() => setOpen(false)}>
+          <DialogTitle>Create Project</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Project Name"
+              fullWidth
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={!name} variant="contained">
+              Create
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 };

@@ -314,12 +314,16 @@ const ProjectDetail: React.FC = () => {
         <Typography variant="h5" ml={1}>
           {project.name}
         </Typography>
-        <IconButton onClick={handleProjectEditOpen} sx={{ ml: 1 }}>
-          <EditIcon />
-        </IconButton>
-        <IconButton onClick={handleDelete} sx={{ ml: 1 }}>
-          <DeleteIcon />
-        </IconButton>
+        {user?.role === "admin" && (
+          <>
+            <IconButton onClick={handleProjectEditOpen} sx={{ ml: 1 }}>
+              <EditIcon />
+            </IconButton>
+            <IconButton onClick={handleDelete} sx={{ ml: 1 }}>
+              <DeleteIcon />
+            </IconButton>
+          </>
+        )}
       </Box>
       <Typography variant="subtitle1" mb={2}>
         {project.description}
@@ -331,9 +335,11 @@ const ProjectDetail: React.FC = () => {
         mb={2}
       >
         <Typography variant="h6">Tasks</Typography>
-        <Button variant="contained" onClick={handleOpen}>
-          New Task
-        </Button>
+        {user?.role === "admin" && (
+          <Button variant="contained" onClick={handleOpen}>
+            New Task
+          </Button>
+        )}
       </Box>
       {loading && <CircularProgress />}
       <List>
@@ -387,60 +393,66 @@ const ProjectDetail: React.FC = () => {
                 </>
               }
             />
-            <IconButton onClick={() => handleEditOpen(task)}>
-              <EditIcon />
-            </IconButton>
-            <IconButton onClick={() => handleDeleteTask(task._id)}>
-              <DeleteIcon />
-            </IconButton>
+            {user?.role === "admin" && (
+              <>
+                <IconButton onClick={() => handleEditOpen(task)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton onClick={() => handleDeleteTask(task._id)}>
+                  <DeleteIcon />
+                </IconButton>
+              </>
+            )}
           </ListItem>
         ))}
       </List>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Create Task</DialogTitle>
-        <form onSubmit={handleCreate}>
-          <DialogContent>
-            <TextField
-              label="Task Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              fullWidth
-              margin="normal"
-              required
-            />
-            <TextField
-              label="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              fullWidth
-              margin="normal"
-            />
-            {user?.role === "admin" && (
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Assignee</InputLabel>
-                <Select
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
-                  label="Assignee"
-                >
-                  <MenuItem value="">Unassigned</MenuItem>
-                  {orgUsers.map((user) => (
-                    <MenuItem key={user._id} value={user._id}>
-                      {user.name} ({user.email})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              Create
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      {user?.role === "admin" && (
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Create Task</DialogTitle>
+          <form onSubmit={handleCreate}>
+            <DialogContent>
+              <TextField
+                label="Task Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                fullWidth
+                margin="normal"
+                required
+              />
+              <TextField
+                label="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                fullWidth
+                margin="normal"
+              />
+              {user?.role === "admin" && (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Assignee</InputLabel>
+                  <Select
+                    value={assignee}
+                    onChange={(e) => setAssignee(e.target.value)}
+                    label="Assignee"
+                  >
+                    <MenuItem value="">Unassigned</MenuItem>
+                    {orgUsers.map((user) => (
+                      <MenuItem key={user._id} value={user._id}>
+                        {user.name} ({user.email})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button type="submit" variant="contained">
+                Create
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      )}
       <Dialog open={editOpen} onClose={handleEditClose}>
         <DialogTitle>Edit Task</DialogTitle>
         <form onSubmit={handleEditSave}>
