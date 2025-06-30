@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../api/axios";
 
 interface User {
   id: string;
@@ -23,13 +23,10 @@ export const login = createAsyncThunk(
   "auth/login",
   async (data: { email: string; password: string }, thunkAPI) => {
     try {
-      const res = await axios.post("/api/auth/login", data);
+      const res = await api.post("/api/auth/login", data);
       return res.data;
-    } catch (err) {
-      let message = "Login failed";
-      if (axios.isAxiosError(err) && err.response) {
-        message = err.response.data.message || message;
-      }
+    } catch {
+      const message = "Login failed";
       return thunkAPI.rejectWithValue({ message });
     }
   }
@@ -48,13 +45,11 @@ export const register = createAsyncThunk(
     thunkAPI
   ) => {
     try {
-      const res = await axios.post("/api/auth/register", data);
+      const res = await api.post("/api/auth/register", data);
       return res.data;
     } catch (err) {
-      let message = "Registration failed";
-      if (axios.isAxiosError(err) && err.response) {
-        message = err.response.data.message || message;
-      }
+      console.log("error--------->", err);
+      const message = "Registration failed";
       return thunkAPI.rejectWithValue({ message });
     }
   }
@@ -66,7 +61,7 @@ export const loadUser = createAsyncThunk(
     const token = localStorage.getItem("token");
     if (!token) return thunkAPI.rejectWithValue({ message: "No token" });
     try {
-      const res = await axios.get("/api/auth/me", {
+      const res = await api.get("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return { user: res.data, token };

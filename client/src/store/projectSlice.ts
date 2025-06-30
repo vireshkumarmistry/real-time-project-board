@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../api/axios";
 
 interface Project {
   _id: string;
@@ -27,15 +27,12 @@ export const fetchProjects = createAsyncThunk<
 >("projects/fetchProjects", async (_, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.get("/api/projects", {
+    const res = await api.get("/api/projects", {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
-  } catch (err) {
-    let message = "Failed to fetch projects";
-    if (axios.isAxiosError(err) && err.response) {
-      message = err.response.data.message || message;
-    }
+  } catch {
+    const message = "Failed to fetch projects";
     return thunkAPI.rejectWithValue({ message });
   }
 });
@@ -50,15 +47,12 @@ export const createProject = createAsyncThunk<
 >("projects/createProject", async (data, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.post("/api/projects", data, {
+    const res = await api.post("/api/projects", data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
-  } catch (err) {
-    let message = "Failed to create project";
-    if (axios.isAxiosError(err) && err.response) {
-      message = err.response.data.message || message;
-    }
+  } catch {
+    const message = "Failed to create project";
     return thunkAPI.rejectWithValue({ message });
   }
 });
@@ -78,15 +72,12 @@ export const updateProject = createAsyncThunk<
 >("projects/updateProject", async ({ id, updates }, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.put(`/api/projects/${id}`, updates, {
+    const res = await api.put(`/api/projects/${id}`, updates, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
-  } catch (err) {
-    let message = "Failed to update project";
-    if (axios.isAxiosError(err) && err.response) {
-      message = err.response.data.message || message;
-    }
+  } catch {
+    const message = "Failed to update project";
     return thunkAPI.rejectWithValue({ message });
   }
 });
@@ -101,15 +92,12 @@ export const deleteProject = createAsyncThunk<
 >("projects/deleteProject", async (id, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    await axios.delete(`/api/projects/${id}`, {
+    await api.delete(`/api/projects/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return id;
-  } catch (err) {
-    let message = "Failed to delete project";
-    if (axios.isAxiosError(err) && err.response) {
-      message = err.response.data.message || message;
-    }
+  } catch {
+    const message = "Failed to delete project";
     return thunkAPI.rejectWithValue({ message });
   }
 });

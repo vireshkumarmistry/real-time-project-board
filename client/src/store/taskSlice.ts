@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import api from "../api/axios";
 import axios from "axios";
 
 interface Task {
@@ -30,7 +31,7 @@ export const fetchTasks = createAsyncThunk<
 >("tasks/fetchTasks", async (projectId, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.get(`/api/tasks/project/${projectId}`, {
+    const res = await api.get(`/api/tasks/project/${projectId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
@@ -53,7 +54,7 @@ export const createTask = createAsyncThunk<
 >("tasks/createTask", async (data, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.post("/api/tasks", data, {
+    const res = await api.post("/api/tasks", data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
@@ -79,7 +80,7 @@ export const updateTask = createAsyncThunk<
 >("tasks/updateTask", async ({ id, updates }, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const res = await axios.put(`/api/tasks/${id}`, updates, {
+    const res = await api.put(`/api/tasks/${id}`, updates, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
@@ -102,7 +103,7 @@ export const deleteTask = createAsyncThunk<
 >("tasks/deleteTask", async (id, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    await axios.delete(`/api/tasks/${id}`, {
+    await api.delete(`/api/tasks/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return id;

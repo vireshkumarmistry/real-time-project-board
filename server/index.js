@@ -10,15 +10,19 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  },
-});
 
-// Middleware
-app.use(cors());
+// Parse allowed origins from .env
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : ["http://localhost:5173"];
+
+// CORS for Express
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true, // if you use cookies/auth
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
@@ -26,7 +30,14 @@ app.use(express.json());
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI);
 
-// Socket.io connection
+// Socket.io connection (use allowedOrigins for CORS)
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+});
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
   socket.on("disconnect", () => {

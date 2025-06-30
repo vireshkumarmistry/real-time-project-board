@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "./axios";
 
 export interface OrganizationOption {
   _id: string;
@@ -6,6 +6,6 @@ export interface OrganizationOption {
 }
 
 export const fetchOrganizations = async (): Promise<OrganizationOption[]> => {
-  const res = await axios.get("/api/auth/organizations");
+  const res = await api.get("/api/auth/organizations");
   return res.data as OrganizationOption[];
 };
