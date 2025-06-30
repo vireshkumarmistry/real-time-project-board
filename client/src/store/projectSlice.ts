@@ -166,9 +166,7 @@ const projectSlice = createSlice({
           (action.payload as { message: string })?.message ||
           "Failed to create project";
       })
-      .addCase(updateProject.fulfilled, () => {
-        // Do not update here, rely on socket event for real-time update
-      })
+      .addCase(updateProject.fulfilled, () => {})
       .addCase(
         deleteProject.fulfilled,
         (state, action: PayloadAction<string>) => {
