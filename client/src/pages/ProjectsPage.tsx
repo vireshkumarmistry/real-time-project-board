@@ -1,0 +1,145 @@
+import React, { useEffect, useState } from "react";
+import { useSelector } from "../store";
+import { useDispatch } from "../store/useDispatch";
+import {
+  fetchProjects,
+  createProject,
+  updateProjectInState,
+} from "../store/projectSlice";
+import { useNavigate } from "react-router-dom";
+import {
+  Button,
+  Typography,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  CircularProgress,
+} from "@mui/material";
+import { getSocket } from "../socket";
+import { useSnackbar } from "notistack";
+
+const ProjectsPage: React.FC = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
+  const { items: projects, loading } = useSelector((state) => state.projects);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    dispatch(fetchProjects());
+    const socket = getSocket();
+    socket.on("project:created", () => {
+      dispatch(fetchProjects() as any);
+    });
+    socket.on("project:deleted", () => {
+      dispatch(fetchProjects() as any);
+    });
+    socket.on("project:updated", (project) => {
+      dispatch(updateProjectInState(project));
+    });
+    return () => {
+      socket.off("project:created");
+      socket.off("project:deleted");
+      socket.off("project:updated");
+    };
+  }, [dispatch]);
+
+  const handleCreate = async () => {
+    try {
+      await dispatch(createProject({ name, description }) as any).unwrap();
+      setOpen(false);
+      setName("");
+      setDescription("");
+      enqueueSnackbar("Project created successfully!", { variant: "success" });
+    } catch (err: any) {
+      enqueueSnackbar(err?.message || "Failed to create project", {
+        variant: "error",
+      });
+    }
+  };
+
+  return (
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>
+        Projects
+      </Typography>
+      {loading ? (
+        <CircularProgress />
+      ) : projects.length === 0 ? (
+        <Box>
+          <Typography>No projects found.</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setOpen(true)}
+          >
+            Create Project
+          </Button>
+        </Box>
+      ) : (
+        <Box>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setOpen(true)}
+            sx={{ mb: 2 }}
+          >
+            New Project
+          </Button>
+          {projects.map((project) => (
+            <Box
+              key={project._id}
+              sx={{
+                border: "1px solid #ccc",
+                borderRadius: 2,
+                p: 2,
+                mb: 2,
+                cursor: "pointer",
+                "&:hover": { background: "#f5f5f5" },
+              }}
+              onClick={() => navigate(`/project/${project._id}`)}
+            >
+              <Typography variant="h6">{project.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {project.description}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Create Project</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Project Name"
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={!name} variant="contained">
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default ProjectsPage;

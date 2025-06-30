@@ -1,0 +1,31 @@
+{
+    "name": "server",
+    "private": true,
+    "version": "0.1.0",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    },
+    "description": "This is the Node.js backend for the Viresh Collab Task Manager. It uses Express, MongoDB, JWT authentication, and Socket.io for real-time communication.",
+    "main": "index.js",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@types/react-router-dom": "^5.3.3",
+        "bcryptjs": "^3.0.2",
+        "cors": "^2.8.5",
+        "dotenv": "^17.0.0",
+        "express": "^5.1.0",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.16.1",
+        "morgan": "^1.10.0",
+        "react-router-dom": "^7.6.3",
+        "redux-persist": "^6.0.0",
+        "socket.io": "^4.8.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.10"
+    }
+}

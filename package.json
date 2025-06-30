@@ -1,0 +1,11 @@
+{
+    "name": "viresh-collab-task-manager",
+    "private": true,
+    "workspaces": [
+        "client",
+        "server"
+    ],
+    "dependencies": {
+        "redux-persist": "^6.0.0"
+    }
+}

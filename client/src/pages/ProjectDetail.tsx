@@ -1,0 +1,497 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useSelector } from "../store";
+import {
+  fetchTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+} from "../store/taskSlice";
+import {
+  updateProject,
+  deleteProject,
+  fetchProjects,
+} from "../store/projectSlice";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Avatar,
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import MuiAlert from "@mui/material/Alert";
+import { useSnackbar } from "notistack";
+type AlertColor = "success" | "info" | "warning" | "error";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import type { AppDispatch } from "../store";
+import { getSocket } from "../socket";
+import { addTask, updateTaskInState, removeTask } from "../store/taskSlice";
+import { updateProjectInState } from "../store/projectSlice";
+import { fetchOrgUsers } from "../api/orgUsers";
+
+interface ProjectMember {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+const ProjectDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const project = useSelector((state) =>
+    state.projects.items.find((p) => p._id === id)
+  );
+  const projectsLoading = useSelector((state) => state.projects.loading);
+  const tasks = useSelector((state) => state.tasks.items);
+  const loading = useSelector((state) => state.tasks.loading);
+  const error = useSelector((state) => state.tasks.error);
+  const { user, token } = useSelector((state) => state.auth);
+  const { enqueueSnackbar } = useSnackbar();
+
+  // State for create task dialog
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [orgUsers, setOrgUsers] = useState<any[]>([]);
+
+  // State for edit task dialog
+  const [editOpen, setEditOpen] = useState(false);
+  type TaskType = (typeof tasks)[number] | null;
+  const [editTask, setEditTask] = useState<TaskType>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editTaskDescription, setEditTaskDescription] = useState("");
+
+  // State for edit project dialog
+  const [projectEditOpen, setProjectEditOpen] = useState(false);
+  const [editName, setEditName] = useState(project?.name || "");
+  const [editProjectDescription, setEditProjectDescription] = useState(
+    project?.description || ""
+  );
+
+  // State for snackbar notifications
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({ open: false, message: "", severity: "success" });
+
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchTasks(id));
+      const socket = getSocket();
+      socket.on("task:created", (task) => {
+        if (task.project === id) dispatch(addTask(task));
+      });
+      socket.on("task:updated", (task) => {
+        if (task.project === id) dispatch(updateTaskInState(task));
+      });
+      socket.on("task:deleted", (taskId) => {
+        dispatch(removeTask(taskId));
+      });
+      socket.on("project:updated", (project) => {
+        if (project._id === id) {
+          // Update project in Redux state for this detail page
+          dispatch(updateProjectInState(project));
+        }
+      });
+      return () => {
+        socket.off("task:created");
+        socket.off("task:updated");
+        socket.off("task:deleted");
+        socket.off("project:updated");
+      };
+    }
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!project && !projectsLoading) {
+      // If project not found, fetch projects
+      dispatch(fetchProjects());
+    }
+  }, [project, projectsLoading, dispatch]);
+
+  useEffect(() => {
+    if (user?.role === "admin" && project && token) {
+      import("../api/projectMembers").then(({ fetchProjectMembers }) => {
+        fetchProjectMembers(project._id, token).then(setMembers);
+      });
+    }
+  }, [user, project, token]);
+
+  useEffect(() => {
+    // Fetch all org users for assignee dropdown
+    if (token) {
+      fetchOrgUsers(token).then(setOrgUsers);
+    }
+  }, [project, token]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setTitle("");
+    setDescription("");
+    setAssignee("");
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    const taskData: {
+      title: string;
+      description: string;
+      project: string;
+      assignedTo?: string;
+    } = { title, description, project: id };
+    if (user?.role === "admin" && assignee) taskData.assignedTo = assignee;
+    // CREATE TASK
+    try {
+      await dispatch(createTask(taskData)).unwrap();
+      enqueueSnackbar("Task created successfully!", { variant: "success" });
+    } catch (err: any) {
+      enqueueSnackbar(err?.message || "An error occurred", {
+        variant: "error",
+      });
+    }
+    handleClose();
+    setAssignee("");
+  };
+
+  const handleEditOpen = (task: TaskType) => {
+    setEditTask(task);
+    setEditTitle(task?.title || "");
+    setEditTaskDescription(task?.description || "");
+    setEditOpen(true);
+  };
+  const handleEditClose = () => {
+    setEditOpen(false);
+    setEditTask(null);
+    setEditTitle("");
+    setEditTaskDescription("");
+  };
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editTask) {
+      // UPDATE TASK
+      try {
+        await dispatch(
+          updateTask({
+            id: editTask._id,
+            updates: {
+              title: editTitle,
+              description: editTaskDescription,
+              ...(user?.role === "admin" && assignee
+                ? { assignedTo: assignee }
+                : {}),
+            },
+          })
+        ).unwrap();
+        setEditOpen(false);
+        setEditTask(null);
+        setEditTitle("");
+        setEditTaskDescription("");
+        enqueueSnackbar("Task updated successfully!", { variant: "success" });
+      } catch (err: any) {
+        enqueueSnackbar(err?.message || "An error occurred", {
+          variant: "error",
+        });
+      }
+    }
+  };
+  const handleProjectEditOpen = () => {
+    setEditName(project?.name || "");
+    setEditProjectDescription(project?.description || "");
+    setProjectEditOpen(true);
+  };
+  const handleProjectEditClose = () => {
+    setProjectEditOpen(false);
+  };
+  const handleProjectEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (project) {
+      // UPDATE PROJECT
+      try {
+        await dispatch(
+          updateProject({
+            id: project._id,
+            updates: { name: editName, description: editProjectDescription },
+          })
+        ).unwrap();
+        setProjectEditOpen(false);
+        enqueueSnackbar("Project updated successfully!", {
+          variant: "success",
+        });
+      } catch (err: any) {
+        enqueueSnackbar(err?.message || "An error occurred", {
+          variant: "error",
+        });
+      }
+    }
+  };
+  const handleDelete = () => {
+    if (project) {
+      dispatch(deleteProject(project._id));
+      navigate("/");
+    }
+  };
+  const handleDeleteTask = async (taskId: string) => {
+    // DELETE TASK
+    try {
+      await dispatch(deleteTask(taskId)).unwrap();
+      enqueueSnackbar("Task deleted successfully!", { variant: "success" });
+      // No redirect, just remove from list (handled by socket and redux)
+    } catch (err: any) {
+      enqueueSnackbar(err?.message || "Failed to delete task", {
+        variant: "error",
+      });
+    }
+  };
+
+  if (!project) {
+    if (projectsLoading) return <Typography>Loading project...</Typography>;
+    return <Typography>Project not found.</Typography>;
+  }
+
+  return (
+    <Box maxWidth={600} mx="auto" mt={6}>
+      <Box display="flex" alignItems="center" mb={2}>
+        <IconButton onClick={() => navigate(-1)}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h5" ml={1}>
+          {project.name}
+        </Typography>
+        <IconButton onClick={handleProjectEditOpen} sx={{ ml: 1 }}>
+          <EditIcon />
+        </IconButton>
+        <IconButton onClick={handleDelete} sx={{ ml: 1 }}>
+          <DeleteIcon />
+        </IconButton>
+      </Box>
+      <Typography variant="subtitle1" mb={2}>
+        {project.description}
+      </Typography>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
+        <Typography variant="h6">Tasks</Typography>
+        <Button variant="contained" onClick={handleOpen}>
+          New Task
+        </Button>
+      </Box>
+      {loading && <CircularProgress />}
+      <List>
+        {tasks.map((task) => (
+          <ListItem key={task._id} divider alignItems="flex-start">
+            <Avatar
+              sx={{
+                mr: 2,
+                bgcolor: task.assignedTo ? "primary.main" : "grey.400",
+              }}
+            >
+              {task.assignedTo
+                ? members.find((m) => m._id === task.assignedTo)?.name?.[0] ||
+                  "U"
+                : "U"}
+            </Avatar>
+            <ListItemText
+              primary={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography variant="subtitle1">{task.title}</Typography>
+                  {task.assignedTo && (
+                    <Typography variant="caption" color="primary">
+                      Assigned to:{" "}
+                      {typeof task.assignedTo === "object" &&
+                      task.assignedTo?.name
+                        ? task.assignedTo.name
+                        : orgUsers.find(
+                            (u) =>
+                              u._id ===
+                              (typeof task.assignedTo === "string"
+                                ? task.assignedTo
+                                : task.assignedTo?._id)
+                          )?.name || "User"}
+                    </Typography>
+                  )}
+                </Box>
+              }
+              secondary={
+                <>
+                  <Typography variant="body2" color="text.secondary">
+                    {task.description}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Status: {task.status}
+                  </Typography>
+                </>
+              }
+            />
+            <IconButton onClick={() => handleEditOpen(task)}>
+              <EditIcon />
+            </IconButton>
+            <IconButton onClick={() => handleDeleteTask(task._id)}>
+              <DeleteIcon />
+            </IconButton>
+          </ListItem>
+        ))}
+      </List>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Create Task</DialogTitle>
+        <form onSubmit={handleCreate}>
+          <DialogContent>
+            <TextField
+              label="Task Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              fullWidth
+              margin="normal"
+              required
+            />
+            <TextField
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              margin="normal"
+            />
+            {user?.role === "admin" && (
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Assignee</InputLabel>
+                <Select
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  label="Assignee"
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {orgUsers.map((user) => (
+                    <MenuItem key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button type="submit" variant="contained">
+              Create
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+      <Dialog open={editOpen} onClose={handleEditClose}>
+        <DialogTitle>Edit Task</DialogTitle>
+        <form onSubmit={handleEditSave}>
+          <DialogContent>
+            <TextField
+              label="Task Title"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              fullWidth
+              margin="normal"
+              required
+            />
+            <TextField
+              label="Description"
+              value={editTaskDescription}
+              onChange={(e) => setEditTaskDescription(e.target.value)}
+              fullWidth
+              margin="normal"
+            />
+            {user?.role === "admin" && (
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Assignee</InputLabel>
+                <Select
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  label="Assignee"
+                >
+                  <MenuItem value="">Unassigned</MenuItem>
+                  {orgUsers.map((user) => (
+                    <MenuItem key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditClose}>Cancel</Button>
+            <Button type="submit" variant="contained">
+              Save
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+      <Dialog open={projectEditOpen} onClose={handleProjectEditClose}>
+        <DialogTitle>Edit Project</DialogTitle>
+        <form onSubmit={handleProjectEditSave}>
+          <DialogContent>
+            <TextField
+              label="Project Name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              fullWidth
+              margin="normal"
+              required
+            />
+            <TextField
+              label="Description"
+              value={editProjectDescription}
+              onChange={(e) => setEditProjectDescription(e.target.value)}
+              fullWidth
+              margin="normal"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleProjectEditClose}>Cancel</Button>
+            <Button type="submit" variant="contained">
+              Save
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default ProjectDetail;
