@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useSelector } from "../store";
 import {
@@ -23,7 +24,6 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { AppDispatch } from "../store";
-import type { Project } from "../store/projectSlice";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { getSocket } from "../socket";
@@ -51,7 +51,11 @@ const Dashboard: React.FC = () => {
 
   // State for edit project dialog
   const [editOpen, setEditOpen] = useState(false);
-  const [editProject, setEditProject] = useState<any>(null);
+  const [editProject, setEditProject] = useState<{
+    _id: string;
+    name: string;
+    description?: string;
+  } | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
@@ -60,7 +64,12 @@ const Dashboard: React.FC = () => {
       dispatch(fetchProjects());
       const socket = getSocket();
       socket.on("project:created", (project) => {
-        dispatch(createProject.fulfilled(project, "", undefined));
+        dispatch(
+          createProject.fulfilled(project, "", {
+            name: project.name,
+            description: project.description,
+          })
+        );
       });
       socket.on("project:updated", (project) => {
         dispatch(
@@ -88,13 +97,21 @@ const Dashboard: React.FC = () => {
     setDescription("");
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(createProject({ name, description }));
-    handleClose();
+    try {
+      await dispatch(createProject({ name, description })).unwrap();
+      handleClose();
+    } catch (err) {
+      console.error("Failed to create project: ", err);
+    }
   };
 
-  const handleEditOpen = (project: any) => {
+  const handleEditOpen = (project: {
+    _id: string;
+    name: string;
+    description?: string;
+  }) => {
     setEditProject(project);
     setEditName(project.name);
     setEditDescription(project.description || "");
@@ -106,16 +123,20 @@ const Dashboard: React.FC = () => {
     setEditName("");
     setEditDescription("");
   };
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editProject) {
-      dispatch(
-        updateProject({
-          id: editProject._id,
-          updates: { name: editName, description: editDescription },
-        })
-      );
-      handleEditClose();
+      try {
+        await dispatch(
+          updateProject({
+            id: editProject._id,
+            updates: { name: editName, description: editDescription },
+          })
+        ).unwrap();
+        handleEditClose();
+      } catch (err) {
+        console.error("Failed to update project: ", err);
+      }
     }
   };
   const handleDelete = (id: string) => {

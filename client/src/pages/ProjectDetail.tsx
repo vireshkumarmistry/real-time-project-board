@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useSelector } from "../store";
@@ -62,7 +63,6 @@ const ProjectDetail: React.FC = () => {
   const projectsLoading = useSelector((state) => state.projects.loading);
   const tasks = useSelector((state) => state.tasks.items);
   const loading = useSelector((state) => state.tasks.loading);
-  const error = useSelector((state) => state.tasks.error);
   const { user, token } = useSelector((state) => state.auth);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -72,7 +72,7 @@ const ProjectDetail: React.FC = () => {
   const [description, setDescription] = useState("");
   const [assignee, setAssignee] = useState("");
   const [members, setMembers] = useState<ProjectMember[]>([]);
-  const [orgUsers, setOrgUsers] = useState<any[]>([]);
+  const [orgUsers, setOrgUsers] = useState<ProjectMember[]>([]);
 
   // State for edit task dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -94,6 +94,8 @@ const ProjectDetail: React.FC = () => {
     message: string;
     severity: AlertColor;
   }>({ open: false, message: "", severity: "success" });
+
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -123,12 +125,21 @@ const ProjectDetail: React.FC = () => {
     }
   }, [dispatch, id]);
 
+  // Fetch projects only once on mount if not loaded
   useEffect(() => {
-    if (!project && !projectsLoading) {
-      // If project not found, fetch projects
-      dispatch(fetchProjects());
+    if (!projectsLoaded && !projectsLoading) {
+      dispatch(fetchProjects()).then(() => setProjectsLoaded(true));
+    } else if (!projectsLoading) {
+      setProjectsLoaded(true);
     }
-  }, [project, projectsLoading, dispatch]);
+  }, [dispatch, projectsLoaded, projectsLoading]);
+
+  // Only redirect if projectsLoaded is true and project is missing
+  useEffect(() => {
+    if (projectsLoaded && !project) {
+      navigate("/");
+    }
+  }, [project, projectsLoaded, navigate]);
 
   useEffect(() => {
     if (user?.role === "admin" && project && token) {
@@ -167,10 +178,12 @@ const ProjectDetail: React.FC = () => {
     try {
       await dispatch(createTask(taskData)).unwrap();
       enqueueSnackbar("Task created successfully!", { variant: "success" });
-    } catch (err: any) {
-      enqueueSnackbar(err?.message || "An error occurred", {
-        variant: "error",
-      });
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? (err as { message?: string }).message
+          : undefined;
+      enqueueSnackbar(message || "An error occurred", { variant: "error" });
     }
     handleClose();
     setAssignee("");
@@ -210,10 +223,12 @@ const ProjectDetail: React.FC = () => {
         setEditTitle("");
         setEditTaskDescription("");
         enqueueSnackbar("Task updated successfully!", { variant: "success" });
-      } catch (err: any) {
-        enqueueSnackbar(err?.message || "An error occurred", {
-          variant: "error",
-        });
+      } catch (err: unknown) {
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? (err as { message?: string }).message
+            : undefined;
+        enqueueSnackbar(message || "An error occurred", { variant: "error" });
       }
     }
   };
@@ -240,17 +255,32 @@ const ProjectDetail: React.FC = () => {
         enqueueSnackbar("Project updated successfully!", {
           variant: "success",
         });
-      } catch (err: any) {
-        enqueueSnackbar(err?.message || "An error occurred", {
-          variant: "error",
-        });
+      } catch (err: unknown) {
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? (err as { message?: string }).message
+            : undefined;
+        enqueueSnackbar(message || "An error occurred", { variant: "error" });
       }
     }
   };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (project) {
-      dispatch(deleteProject(project._id));
-      navigate("/");
+      try {
+        await dispatch(deleteProject(project._id)).unwrap();
+        enqueueSnackbar("Project deleted successfully!", {
+          variant: "success",
+        });
+        navigate("/");
+      } catch (err: unknown) {
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? (err as { message?: string }).message
+            : undefined;
+        enqueueSnackbar(message || "Failed to delete project", {
+          variant: "error",
+        });
+      }
     }
   };
   const handleDeleteTask = async (taskId: string) => {
@@ -259,8 +289,12 @@ const ProjectDetail: React.FC = () => {
       await dispatch(deleteTask(taskId)).unwrap();
       enqueueSnackbar("Task deleted successfully!", { variant: "success" });
       // No redirect, just remove from list (handled by socket and redux)
-    } catch (err: any) {
-      enqueueSnackbar(err?.message || "Failed to delete task", {
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? (err as { message?: string }).message
+          : undefined;
+      enqueueSnackbar(message || "Failed to delete task", {
         variant: "error",
       });
     }
@@ -324,14 +358,19 @@ const ProjectDetail: React.FC = () => {
                     <Typography variant="caption" color="primary">
                       Assigned to:{" "}
                       {typeof task.assignedTo === "object" &&
-                      task.assignedTo?.name
-                        ? task.assignedTo.name
+                      task.assignedTo &&
+                      "name" in task.assignedTo
+                        ? (task.assignedTo as { name: string }).name
                         : orgUsers.find(
                             (u) =>
                               u._id ===
                               (typeof task.assignedTo === "string"
                                 ? task.assignedTo
-                                : task.assignedTo?._id)
+                                : task.assignedTo &&
+                                  typeof task.assignedTo === "object" &&
+                                  "_id" in task.assignedTo
+                                ? (task.assignedTo as { _id: string })._id
+                                : undefined)
                           )?.name || "User"}
                     </Typography>
                   )}

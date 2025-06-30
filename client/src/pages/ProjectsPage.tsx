@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "../store";
 import { useDispatch } from "../store/useDispatch";
 import {
@@ -34,10 +35,10 @@ const ProjectsPage: React.FC = () => {
     dispatch(fetchProjects());
     const socket = getSocket();
     socket.on("project:created", () => {
-      dispatch(fetchProjects() as any);
+      dispatch(fetchProjects());
     });
     socket.on("project:deleted", () => {
-      dispatch(fetchProjects() as any);
+      dispatch(fetchProjects());
     });
     socket.on("project:updated", (project) => {
       dispatch(updateProjectInState(project));
@@ -51,13 +52,17 @@ const ProjectsPage: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      await dispatch(createProject({ name, description }) as any).unwrap();
+      await dispatch(createProject({ name, description })).unwrap();
       setOpen(false);
       setName("");
       setDescription("");
       enqueueSnackbar("Project created successfully!", { variant: "success" });
-    } catch (err: any) {
-      enqueueSnackbar(err?.message || "Failed to create project", {
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? (err as { message?: string }).message
+          : undefined;
+      enqueueSnackbar(message || "Failed to create project", {
         variant: "error",
       });
     }

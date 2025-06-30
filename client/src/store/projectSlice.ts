@@ -168,6 +168,7 @@ const projectSlice = createSlice({
       })
       .addCase(
         updateProject.fulfilled,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         (state, action: PayloadAction<Project>) => {
           // Do not update here, rely on socket event for real-time update
         }

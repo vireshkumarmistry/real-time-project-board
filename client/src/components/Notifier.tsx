@@ -8,19 +8,22 @@ const Notifier = () => {
   const { error: taskError } = useSelector((state) => state.tasks);
   const { enqueueSnackbar } = useSnackbar();
 
+  // Helper: ignore errors for create/update/delete/add actions
+  const shouldShow = (msg?: string) =>
+    msg && !/delete|update|edit|create|add/i.test(msg);
+
   useEffect(() => {
     if (error) enqueueSnackbar(error, { variant: "error" });
   }, [error, enqueueSnackbar]);
 
   useEffect(() => {
-    if (projectError) enqueueSnackbar(projectError, { variant: "error" });
+    if (shouldShow(projectError as string))
+      enqueueSnackbar(projectError, { variant: "error" });
   }, [projectError, enqueueSnackbar]);
 
   useEffect(() => {
-    // Prevent double error toast for delete or update task
-    if (taskError && !/delete|update|edit/i.test(taskError)) {
+    if (shouldShow(taskError as string))
       enqueueSnackbar(taskError, { variant: "error" });
-    }
   }, [taskError, enqueueSnackbar]);
 
   return null;
