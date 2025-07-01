@@ -1,8 +1,8 @@
 module.exports = (io) => {
   const express = require("express");
-  const Task = require("../models/Task");
-  const Project = require("../models/Project");
-  const authMiddleware = require("../utils/authMiddleware");
+  const Task = require("../../models/Task");
+  const Project = require("../../models/Project");
+  const authMiddleware = require("../../utils/authMiddleware");
 
   const router = express.Router();
 
@@ -31,7 +31,7 @@ module.exports = (io) => {
       }
       // Check assignedTo user is in org (do not require project membership)
       if (assignedTo) {
-        const user = await require("../models/User").findOne({
+        const user = await require("../../models/User").findOne({
           _id: assignedTo,
           organization: req.organization,
         });

@@ -51,18 +51,18 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/api/auth.routes");
 app.use("/api/auth", authRoutes);
 
-const projectRoutes = require("./routes/project")(io);
-const taskRoutes = require("./routes/task")(io);
+const projectRoutes = require("./routes/api/project.routes")(io);
+const taskRoutes = require("./routes/api/task.routes")(io);
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 
-const orgUsersRoutes = require("./routes/orgUsers");
+const orgUsersRoutes = require("./routes/api/orgUsers.routes");
 app.use("/api/auth", orgUsersRoutes);
 
-const organizationsRoutes = require("./routes/organizations");
+const organizationsRoutes = require("./routes/api/organizations.routes");
 app.use("/api/auth", organizationsRoutes);
 
 const PORT = process.env.PORT || 5000;

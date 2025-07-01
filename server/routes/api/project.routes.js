@@ -1,9 +1,9 @@
 module.exports = (io) => {
   const express = require("express");
-  const Project = require("../models/Project");
-  const Task = require("../models/Task");
-  const User = require("../models/User");
-  const authMiddleware = require("../utils/authMiddleware");
+  const Project = require("../../models/Project");
+  const Task = require("../../models/Task");
+  const User = require("../../models/User");
+  const authMiddleware = require("../../utils/authMiddleware");
 
   const router = express.Router();
 
