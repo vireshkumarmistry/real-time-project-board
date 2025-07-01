@@ -81,10 +81,12 @@ const ProjectsPage: React.FC = React.memo(() => {
   const projectList = useMemo(() => projects, [projects]);
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Projects
-      </Typography>
+    <Box className="container-fluid px-4">
+      <div className="mt-3">
+        <Typography className="flex justify-start" variant="h4">
+          Projects
+        </Typography>
+      </div>
       {loading ? (
         <CircularProgress />
       ) : projects.length === 0 ? (
@@ -103,43 +105,46 @@ const ProjectsPage: React.FC = React.memo(() => {
       ) : (
         <Box>
           {user?.role === "admin" && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setOpen(true)}
-              sx={{ mb: 2 }}
-            >
-              New Project
-            </Button>
+            <Box className="flex justify-end items-center mb-4 -mt-9">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setOpen(true)}
+                sx={{ mb: 2 }}
+              >
+                New Project
+              </Button>
+            </Box>
           )}
-          <VirtualizedList
-            items={projectList}
-            itemHeight={72}
-            height={400}
-            width="100%"
-            renderItem={(item) => {
-              const project = item as Project;
-              return (
-                <Box
-                  key={project._id}
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 2,
-                    p: 2,
-                    mb: 2,
-                    cursor: "pointer",
-                    "&:hover": { background: "#f5f5f5" },
-                  }}
-                  onClick={() => handleProjectClick(project._id)}
-                >
-                  <Typography variant="h6">{project.name}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {project.description}
-                  </Typography>
-                </Box>
-              );
-            }}
-          />
+          <Box className="mt-4">
+            <VirtualizedList
+              items={projectList}
+              itemHeight={100}
+              height={window.innerHeight - 156}
+              itemsPerRow={2}
+              renderItem={(item) => {
+                const project = item as Project;
+                return (
+                  <Box
+                    key={project._id}
+                    sx={{
+                      border: "1px solid #ccc",
+                      borderRadius: 2,
+                      p: 2,
+                      cursor: "pointer",
+                      "&:hover": { background: "#f5f5f5" },
+                    }}
+                    onClick={() => handleProjectClick(project._id)}
+                  >
+                    <Typography variant="h6">{project.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {project.description}
+                    </Typography>
+                  </Box>
+                );
+              }}
+            />
+          </Box>
         </Box>
       )}
       {user?.role === "admin" && (

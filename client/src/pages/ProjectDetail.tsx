@@ -306,45 +306,53 @@ const ProjectDetail: React.FC = () => {
   }
 
   return (
-    <Box maxWidth={600} mx="auto" mt={6}>
+    <Box className="container mx-auto py-4">
       <Box display="flex" alignItems="center" mb={2}>
         <IconButton onClick={() => navigate(-1)}>
           <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h5" ml={1}>
-          {project.name}
-        </Typography>
+        <Box className="flex items-center gap-2">
+          <Typography className="text-gray-700 capitalize" variant="h5" ml={1}>
+            {project.name}
+          </Typography>
+          <Typography
+            className="flex justify-start capitalize text-gray-400"
+            variant="subtitle1"
+          >
+            ({project.description})
+          </Typography>
+        </Box>
         {user?.role === "admin" && (
-          <>
+          <Box className="flex ml-auto">
             <IconButton onClick={handleProjectEditOpen} sx={{ ml: 1 }}>
-              <EditIcon />
+              <EditIcon className="text-blue-500" />
             </IconButton>
             <IconButton onClick={handleDelete} sx={{ ml: 1 }}>
-              <DeleteIcon />
+              <DeleteIcon className="text-red-600" />
             </IconButton>
-          </>
+          </Box>
         )}
       </Box>
-      <Typography variant="subtitle1" mb={2}>
-        {project.description}
-      </Typography>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+
+      <Box className="flex justify-between items-center mb-4 rounded-lg p-4 bg-gray-100">
         <Typography variant="h6">Tasks</Typography>
         {user?.role === "admin" && (
-          <Button variant="contained" onClick={handleOpen}>
+          <Button
+            className="!bg-gray-500 !text-white text-base hover:!bg-gray-800"
+            variant="contained"
+            onClick={handleOpen}
+          >
             New Task
           </Button>
         )}
       </Box>
       {loading && <CircularProgress />}
-      <List>
+      <List className="flex flex-col gap-4">
         {tasks.map((task) => (
-          <ListItem key={task._id} divider alignItems="flex-start">
+          <ListItem
+            className="border border-gray-400 rounded-md shadow-sm "
+            key={task._id}
+          >
             <Avatar
               sx={{
                 mr: 2,
@@ -359,10 +367,15 @@ const ProjectDetail: React.FC = () => {
             <ListItemText
               primary={
                 <Box display="flex" alignItems="center" gap={1}>
-                  <Typography variant="subtitle1">{task.title}</Typography>
+                  <Typography
+                    className="capitalize text-slate-700"
+                    variant="body1"
+                  >
+                    {task.title}
+                  </Typography>
                   {task.assignedTo && (
-                    <Typography variant="caption" color="primary">
-                      Assigned to:{" "}
+                    <Typography variant="caption" className="text-slate-400">
+                      <strong>Assigned to: </strong>
                       {typeof task.assignedTo === "object" &&
                       task.assignedTo &&
                       "name" in task.assignedTo
@@ -384,11 +397,18 @@ const ProjectDetail: React.FC = () => {
               }
               secondary={
                 <>
-                  <Typography variant="body2" color="text.secondary">
-                    {task.description}
+                  <Typography
+                    className="text-slate-500 capitalize font-bold"
+                    variant="subtitle1"
+                  >
+                    <strong>{task.description}</strong>
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Status: {task.status}
+                  <Typography
+                    className="text-slate-700 font-bold"
+                    variant="caption"
+                  >
+                    <strong>Status: </strong>
+                    <span className="text-slate-400">{task.status}</span>
                   </Typography>
                 </>
               }
@@ -396,10 +416,10 @@ const ProjectDetail: React.FC = () => {
             {user?.role === "admin" && (
               <>
                 <IconButton onClick={() => handleEditOpen(task)}>
-                  <EditIcon />
+                  <EditIcon className="text-blue-500" />
                 </IconButton>
                 <IconButton onClick={() => handleDeleteTask(task._id)}>
-                  <DeleteIcon />
+                  <DeleteIcon className="text-red-600" />
                 </IconButton>
               </>
             )}
@@ -454,7 +474,9 @@ const ProjectDetail: React.FC = () => {
         </Dialog>
       )}
       <Dialog open={editOpen} onClose={handleEditClose}>
-        <DialogTitle>Edit Task</DialogTitle>
+        <DialogTitle className="border-b border-slate-400 font-semibold text-lg">
+          <strong>Edit Task</strong>
+        </DialogTitle>
         <form onSubmit={handleEditSave}>
           <DialogContent>
             <TextField
@@ -490,7 +512,7 @@ const ProjectDetail: React.FC = () => {
               </FormControl>
             )}
           </DialogContent>
-          <DialogActions>
+          <DialogActions className="border-t border-slate-400 ">
             <Button onClick={handleEditClose}>Cancel</Button>
             <Button type="submit" variant="contained">
               Save

@@ -26,7 +26,7 @@
 - **Task Management:**
   - Create, edit, delete tasks within projects (**admin only**)
   - Assign tasks to users (**admin only**)
-  - View and update task status (all users)
+  - View task status (all users)
 - **Real-Time Updates:**
   - Projects and tasks update live via Socket.io
 - **Role-Based UI:**
@@ -37,34 +37,35 @@
   - Code splitting/lazy loading with `React.lazy` and `Suspense`
 - **Robust Error Handling:**
   - Toast notifications for all actions
-  - Graceful error boundaries
 - **TypeScript:**
-  - Full type safety across frontend and backend
+  - Full type safety in frontend
 - **Security:**
   - CORS, JWT, environment-based config, secure API
 - **Modern UI:**
-  - Material-UI (MUI) for a responsive, accessible interface
+  - Material-UI (MUI) and tailwind for a responsive, accessible interface
 
 ---
 
 ## What Admin and User Can Do
 
 ### Admin
+
 - Create, edit, and delete projects
 - Create, edit, delete, and assign tasks
-- Manage all users and organizations
+- Manage all tasks in organizations
 - See all projects and tasks
 
 ### User
+
 - View all projects
-- View and update tasks assigned to them
+- View all tasks
 - Cannot create, edit, or delete projects or tasks
 
 ---
 
 ## Architecture
 
-- **Frontend:** Vite + React + Redux Toolkit + MUI + react-window
+- **Frontend:** Vite + React + Redux Toolkit + MUI + tailwind + react-window
 - **Backend:** Node.js + Express + MongoDB + Socket.io
 - **Monorepo:** Both client and server in a single repository
 - **Environment Config:** `.env.local` for local, `.env.production` for deployed URLs
@@ -75,16 +76,19 @@
 ## Setup Instructions
 
 ### 1. Clone the Repository
+
 ```
 git clone https://github.com/vireshkumarmistry/real-time-project-board.git
 cd real-time-project-board
 ```
 
 ### 2. Environment Variables
+
 - Edit `/client/.env.local` and `/client/.env.production` for frontend API URLs
 - Edit `/server/.env` for backend MongoDB, JWT, and allowed origins
 
 ### 3. Install Dependencies
+
 ```
 # In root, install for both client and server
 cd client && npm install
@@ -92,6 +96,7 @@ cd ../server && npm install
 ```
 
 ### 4. Run Locally
+
 ```
 # Start backend
 cd server && npm run dev
@@ -100,6 +105,7 @@ cd ../client && npm run dev
 ```
 
 ### 5. Deploy
+
 - Frontend: Vercel, Netlify, or similar
 - Backend: Render, Heroku, or similar
 - Set environment variables in deployment dashboards
@@ -133,4 +139,5 @@ cd ../client && npm run dev
 ---
 
 ## Contact
+
 For questions or contributions, see the [GitHub repo](https://github.com/vireshkumarmistry/real-time-project-board)

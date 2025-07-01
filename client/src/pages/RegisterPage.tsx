@@ -79,36 +79,6 @@ const RegisterPage: React.FC = () => {
           margin="normal"
           required
         />
-        {role === "admin" ? (
-          <TextField
-            label="Organization (new)"
-            value={organization}
-            onChange={(e) => setOrganization(e.target.value)}
-            fullWidth
-            margin="normal"
-            required
-            helperText="Admins must create a new unique organization."
-          />
-        ) : (
-          <TextField
-            select
-            label="Organization"
-            value={organization}
-            onChange={(e) => setOrganization(e.target.value)}
-            fullWidth
-            margin="normal"
-            required
-            SelectProps={{ native: true }}
-            helperText="Select your organization."
-          >
-            <option value="">Select organization</option>
-            {orgOptions.map((org) => (
-              <option key={org._id} value={org._id}>
-                {org.name}
-              </option>
-            ))}
-          </TextField>
-        )}
         <TextField
           select
           label="Role"
@@ -122,6 +92,35 @@ const RegisterPage: React.FC = () => {
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </TextField>
+        {role === "admin" ? (
+          <TextField
+            label="Organization (new)"
+            value={organization}
+            onChange={(e) => setOrganization(e.target.value)}
+            fullWidth
+            margin="normal"
+            required
+            helperText="Admins must create a new unique organization."
+          />
+        ) : (
+          <TextField
+            select
+            value={organization}
+            onChange={(e) => setOrganization(e.target.value)}
+            fullWidth
+            margin="normal"
+            required
+            SelectProps={{ native: true }}
+          >
+            <option value="">Select organization</option>
+            {orgOptions.map((org) => (
+              <option key={org._id} value={org._id}>
+                {org.name}
+              </option>
+            ))}
+          </TextField>
+        )}
+
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
             {error}
