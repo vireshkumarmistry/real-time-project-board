@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSelector } from "../store";
 import { useDispatch } from "../store/useDispatch";
 import {
@@ -21,8 +21,10 @@ import {
 } from "@mui/material";
 import { getSocket } from "../socket";
 import { useSnackbar } from "notistack";
+import VirtualizedList from "../components/VirtualizedList";
+import type { Project } from "../store/projectSlice";
 
-const ProjectsPage: React.FC = () => {
+const ProjectsPage: React.FC = React.memo(() => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -51,14 +53,14 @@ const ProjectsPage: React.FC = () => {
     };
   }, [dispatch]);
 
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     try {
       await dispatch(createProject({ name, description })).unwrap();
       setOpen(false);
       setName("");
       setDescription("");
       enqueueSnackbar("Project created successfully!", { variant: "success" });
-    } catch (err: unknown) {
+    } catch (err) {
       const message =
         err && typeof err === "object" && "message" in err
           ? (err as { message?: string }).message
@@ -67,7 +69,16 @@ const ProjectsPage: React.FC = () => {
         variant: "error",
       });
     }
-  };
+  }, [dispatch, name, description, enqueueSnackbar]);
+
+  const handleProjectClick = useCallback(
+    (projectId: string) => {
+      navigate(`/project/${projectId}`);
+    },
+    [navigate]
+  );
+
+  const projectList = useMemo(() => projects, [projects]);
 
   return (
     <Box p={3}>
@@ -101,25 +112,33 @@ const ProjectsPage: React.FC = () => {
               New Project
             </Button>
           )}
-          {projects.map((project) => (
-            <Box
-              key={project._id}
-              sx={{
-                border: "1px solid #ccc",
-                borderRadius: 2,
-                p: 2,
-                mb: 2,
-                cursor: "pointer",
-                "&:hover": { background: "#f5f5f5" },
-              }}
-              onClick={() => navigate(`/project/${project._id}`)}
-            >
-              <Typography variant="h6">{project.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {project.description}
-              </Typography>
-            </Box>
-          ))}
+          <VirtualizedList
+            items={projectList}
+            itemHeight={72}
+            height={400}
+            width="100%"
+            renderItem={(project: Project) => {
+              return (
+                <Box
+                  key={project._id}
+                  sx={{
+                    border: "1px solid #ccc",
+                    borderRadius: 2,
+                    p: 2,
+                    mb: 2,
+                    cursor: "pointer",
+                    "&:hover": { background: "#f5f5f5" },
+                  }}
+                  onClick={() => handleProjectClick(project._id)}
+                >
+                  <Typography variant="h6">{project.name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {project.description}
+                  </Typography>
+                </Box>
+              );
+            }}
+          />
         </Box>
       )}
       {user?.role === "admin" && (
@@ -152,6 +171,6 @@ const ProjectsPage: React.FC = () => {
       )}
     </Box>
   );
-};
+});
 
 export default ProjectsPage;

@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import type { OrganizationOption } from "../api/organizations";
 import { fetchOrganizations } from "../api/organizations";
+import { useNavigate } from "react-router-dom";
 
 const RegisterPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -24,6 +25,7 @@ const RegisterPage: React.FC = () => {
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState<"admin" | "user">("user");
   const [orgOptions, setOrgOptions] = useState<OrganizationOption[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (role === "user") {
@@ -31,9 +33,18 @@ const RegisterPage: React.FC = () => {
     }
   }, [role]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(register({ name, email, password, organization, role }));
+    try {
+      const resultAction = await dispatch(
+        register({ name, email, password, organization, role })
+      );
+      if (register.fulfilled.match(resultAction)) {
+        navigate("/projects");
+      }
+    } catch (err) {
+      console.log("Registration error:", err);
+    }
   };
 
   return (
