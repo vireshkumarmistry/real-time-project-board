@@ -106,8 +106,8 @@ cd ../client && npm run dev
 
 ### 5. Deploy
 
-- Frontend: Vercel, Netlify, or similar
-- Backend: Render, Heroku, or similar
+- Frontend: Vercel
+- Backend: Render
 - Set environment variables in deployment dashboards
 
 ---
