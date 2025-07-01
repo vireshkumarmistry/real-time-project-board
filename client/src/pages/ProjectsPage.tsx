@@ -117,7 +117,8 @@ const ProjectsPage: React.FC = React.memo(() => {
             itemHeight={72}
             height={400}
             width="100%"
-            renderItem={(project: Project) => {
+            renderItem={(item) => {
+              const project = item as Project;
               return (
                 <Box
                   key={project._id}
